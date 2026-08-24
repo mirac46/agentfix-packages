@@ -34,9 +34,14 @@ jobs:
       - name: Test
         run: npm run test --workspaces --if-present
 
+      - name: Check npm auth
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish agentfix-sdk
         working-directory: packages/agentfix-sdk
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -45,7 +50,7 @@ jobs:
 
       - name: Publish n8n-nodes-agentfix
         working-directory: packages/n8n-nodes-agentfix
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
