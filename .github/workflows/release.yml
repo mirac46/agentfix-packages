@@ -41,7 +41,7 @@ jobs:
 
       - name: Publish agentfix-sdk
         working-directory: packages/agentfix-sdk
-        run: npm publish --access public
+        run: npm publish --access public --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -50,7 +50,7 @@ jobs:
 
       - name: Publish n8n-nodes-agentfix
         working-directory: packages/n8n-nodes-agentfix
-        run: npm publish --access public
+        run: npm publish --access public --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
