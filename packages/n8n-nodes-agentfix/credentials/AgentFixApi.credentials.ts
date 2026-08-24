@@ -16,20 +16,20 @@ export class AgentFixApi implements ICredentialType {
 
   properties: INodeProperties[] = [
     {
-      displayName: 'Base URL',
+      displayName: 'Temel URL (Base URL)',
       name: 'baseUrl',
       type: 'string',
       default: 'https://agentfix.com.tr',
       placeholder: 'https://agentfix.com.tr',
-      description: 'AgentFix kurulumunun kök adresi. Sonda slash olmasın.',
+      description: 'AgentFix kök adresi, sonda slash olmasın (AgentFix base URL, no trailing slash).',
     },
     {
-      displayName: 'API Token',
+      displayName: 'API Anahtarı (API Token)',
       name: 'apiToken',
       type: 'string',
       typeOptions: { password: true },
       default: '',
-      description: 'Kullanıcı paneli → API Erişimi sayfasından üretilen token.',
+      description: 'Kullanıcı paneli → API Erişimi (User panel → API Access).',
     },
   ];
 
