@@ -11,8 +11,8 @@ AgentFix ekosistemi için resmi paket monorepo'su. Site (`website/`) bu repoda y
 
 | Paket | Versiyon | Ne işe yarar |
 |---|---|---|
-| [`agentfix-sdk`](./packages/agentfix-sdk) | 0.1.0 | TypeScript SDK — herhangi bir Node.js projesinden RAG, CRM, ingest |
-| [`n8n-nodes-agentfix`](./packages/n8n-nodes-agentfix) | 0.1.0 | n8n community node — drag-and-drop entegrasyon |
+| [`agentfix-sdk`](./packages/agentfix-sdk) | 0.1.1 | TypeScript SDK — herhangi bir Node.js projesinden RAG, CRM, ingest |
+| [`n8n-nodes-agentfix`](./packages/n8n-nodes-agentfix) | 0.1.1 | n8n community node — drag-and-drop entegrasyon |
 
 ## Yayın
 

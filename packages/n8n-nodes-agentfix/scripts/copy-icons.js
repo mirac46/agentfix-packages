@@ -1,7 +1,7 @@
 const { mkdirSync, copyFileSync, readdirSync, statSync, existsSync } = require('node:fs');
 const path = require('node:path');
 
-const SRC_DIRS = ['nodes'];
+const SRC_DIRS = ['nodes', 'credentials'];
 const ROOT = path.resolve(__dirname, '..');
 
 function walk(dir) {

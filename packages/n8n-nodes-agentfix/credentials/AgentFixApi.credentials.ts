@@ -10,6 +10,8 @@ export class AgentFixApi implements ICredentialType {
 
   displayName = 'AgentFix API';
 
+  icon = 'file:agentfix.svg' as const;
+
   documentationUrl = 'https://agentfix.com.tr/docs/api';
 
   properties: INodeProperties[] = [

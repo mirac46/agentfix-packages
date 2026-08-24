@@ -1,14 +1,17 @@
 {
   "name": "n8n-nodes-agentfix",
-  "version": "0.1.0",
-  "description": "n8n community node for AgentFix RAG, CRM, appointments and agent ingest. Powered by agentfix-sdk.",
+  "version": "0.1.1",
+  "description": "Official AgentFix n8n node — RAG search/chat, write patients and appointments from AI agents, CRM, WhatsApp, email and dashboard. One API token.",
   "keywords": [
     "n8n-community-node-package",
     "n8n",
     "agentfix",
     "rag",
     "crm",
-    "appointments"
+    "appointments",
+    "ingest",
+    "whatsapp",
+    "ai-agent"
   ],
   "license": "MIT",
   "homepage": "https://github.com/mirac46/agentfix-packages#readme",
@@ -31,7 +34,9 @@
     "prepublishOnly": "npm run clean && npm run build && npm run lint"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
@@ -43,7 +48,7 @@
     ]
   },
   "dependencies": {
-    "agentfix-sdk": "0.1.0"
+    "agentfix-sdk": "0.1.1"
   },
   "peerDependencies": {
     "n8n-workflow": "*"
