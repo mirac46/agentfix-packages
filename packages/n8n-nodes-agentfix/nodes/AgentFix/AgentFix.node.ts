@@ -22,7 +22,7 @@ export class AgentFix implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'AgentFix',
     name: 'agentFix',
-    icon: { light: 'file:agentfix.svg', dark: 'file:agentfix.dark.svg' },
+    icon: { light: 'file:agentfix.png', dark: 'file:agentfix.dark.png' },
     group: ['transform'],
     version: 1,
     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',

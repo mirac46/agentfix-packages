@@ -10,7 +10,7 @@ export class AgentFixApi implements ICredentialType {
 
   displayName = 'AgentFix API';
 
-  icon = 'file:agentfix.svg' as const;
+  icon = 'file:agentfix.png' as const;
 
   documentationUrl = 'https://agentfix.com.tr/docs/api';
 
