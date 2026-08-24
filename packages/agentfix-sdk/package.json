@@ -1,6 +1,6 @@
 {
   "name": "agentfix-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Official AgentFix TypeScript SDK — RAG, CRM, appointments, WhatsApp and agent ingest.",
   "keywords": [
     "agentfix",

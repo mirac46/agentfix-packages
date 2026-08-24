@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-agentfix",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Official AgentFix n8n node — RAG search/chat, write patients and appointments from AI agents, CRM, WhatsApp, email and dashboard. One API token.",
   "keywords": [
     "n8n-community-node-package",
@@ -48,7 +48,7 @@
     ]
   },
   "dependencies": {
-    "agentfix-sdk": "0.1.1"
+    "agentfix-sdk": "0.1.2"
   },
   "peerDependencies": {
     "n8n-workflow": "*"

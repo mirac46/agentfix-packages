@@ -7,6 +7,7 @@ export {
 } from './errors';
 export {
   compact,
+  pickRagSection,
   resolveAgentFixRequest,
   type HttpMethod,
   type ResolvedRequest,

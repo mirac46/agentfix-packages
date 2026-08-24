@@ -7,7 +7,7 @@ import type {
   JsonObject,
 } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeApiError } from 'n8n-workflow';
-import { resolveAgentFixRequest } from 'agentfix-sdk';
+import { pickRagSection, resolveAgentFixRequest } from 'agentfix-sdk';
 
 function show(resource: string, operations: string[]) {
   return {
@@ -22,7 +22,7 @@ export class AgentFix implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'AgentFix',
     name: 'agentFix',
-    icon: 'file:agentfix.svg',
+    icon: { light: 'file:agentfix.svg', dark: 'file:agentfix.svg' },
     group: ['transform'],
     version: 1,
     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -70,12 +70,17 @@ export class AgentFix implements INodeType {
         noDataExpression: true,
         displayOptions: { show: { resource: ['rag'] } },
         options: [
-          { name: 'Get Context', value: 'context', action: 'Get compiled RAG context' },
+          { name: 'Get About Us (Hakkımızda)', value: 'getAbout', action: 'Get company about section' },
+          { name: 'Get Services (Hizmetler)', value: 'getServices', action: 'Get services catalog' },
+          { name: 'Get FAQs (SSS)', value: 'getFaqs', action: 'Get frequently asked questions' },
+          { name: 'Get Persona', value: 'getPersona', action: 'Get assistant persona' },
+          { name: 'Get Documents', value: 'getDocuments', action: 'Get custom knowledge documents' },
+          { name: 'Get All Context', value: 'context', action: 'Get compiled RAG context' },
           { name: 'Query', value: 'query', action: 'Search knowledge chunks' },
           { name: 'Chat', value: 'chat', action: 'Ask the RAG assistant' },
           { name: 'Sync', value: 'sync', action: 'Update knowledge base' },
         ],
-        default: 'query',
+        default: 'getServices',
       },
       {
         displayName: 'Operation',
@@ -374,7 +379,8 @@ export class AgentFix implements INodeType {
           json: true,
         });
 
-        const payload = Array.isArray(response) ? response : [response];
+        const sliced = resource === 'rag' ? pickRagSection(response, operation) : response;
+        const payload = Array.isArray(sliced) ? sliced : [sliced];
         for (const entry of payload) {
           const json: IDataObject =
             entry !== null && typeof entry === 'object' && !Array.isArray(entry)

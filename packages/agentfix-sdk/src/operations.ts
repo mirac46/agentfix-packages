@@ -30,7 +30,16 @@ export function resolveAgentFixRequest(input: {
   }
 
   if (resource === 'rag') {
-    if (operation === 'context') return { method: 'GET', path: '/api/v1/rag/context' };
+    if (
+      operation === 'context' ||
+      operation === 'getAbout' ||
+      operation === 'getServices' ||
+      operation === 'getFaqs' ||
+      operation === 'getPersona' ||
+      operation === 'getDocuments'
+    ) {
+      return { method: 'GET', path: '/api/v1/rag/context' };
+    }
     if (operation === 'query') {
       return {
         method: 'POST',
@@ -273,4 +282,25 @@ export function resolveAgentFixRequest(input: {
   }
 
   throw new Error(`Unsupported AgentFix operation: ${resource}.${operation}`);
+}
+
+const RAG_SECTION_KEYS = {
+  getAbout: 'about',
+  getServices: 'services',
+  getFaqs: 'faqs',
+  getPersona: 'persona',
+  getDocuments: 'customDocuments',
+} as const;
+
+export function pickRagSection(payload: unknown, operation: string): unknown {
+  const key = RAG_SECTION_KEYS[operation as keyof typeof RAG_SECTION_KEYS];
+  if (!key) return payload;
+  const rec = payload !== null && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+  const data =
+    rec.data !== null && typeof rec.data === 'object' ? (rec.data as Record<string, unknown>) : rec;
+  return {
+    section: key,
+    data: data[key] ?? null,
+    updatedAt: rec.updatedAt ?? null,
+  };
 }

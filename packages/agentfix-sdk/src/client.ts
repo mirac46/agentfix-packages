@@ -4,7 +4,7 @@ import {
   AgentFixNotFoundError,
   AgentFixValidationError,
 } from './errors';
-import { resolveAgentFixRequest, type ResolvedRequest } from './operations';
+import { pickRagSection, resolveAgentFixRequest, type ResolvedRequest } from './operations';
 
 export interface AgentFixClientConfig {
   baseUrl: string;
@@ -97,6 +97,15 @@ export class AgentFix {
 
   readonly rag = {
     context: <T = unknown>() => this.call<T>('rag', 'context'),
+    about: async <T = unknown>() =>
+      pickRagSection(await this.call('rag', 'getAbout'), 'getAbout') as T,
+    services: async <T = unknown>() =>
+      pickRagSection(await this.call('rag', 'getServices'), 'getServices') as T,
+    faqs: async <T = unknown>() => pickRagSection(await this.call('rag', 'getFaqs'), 'getFaqs') as T,
+    persona: async <T = unknown>() =>
+      pickRagSection(await this.call('rag', 'getPersona'), 'getPersona') as T,
+    documents: async <T = unknown>() =>
+      pickRagSection(await this.call('rag', 'getDocuments'), 'getDocuments') as T,
     query: <T = unknown>(fields: { query: string; limit?: number }) =>
       this.call<T>('rag', 'query', fields),
     chat: <T = unknown>(fields: { message: string; history?: unknown; systemPrompt?: string }) =>

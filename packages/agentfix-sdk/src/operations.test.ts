@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAgentFixRequest } from './operations';
+import { pickRagSection, resolveAgentFixRequest } from './operations';
 
 describe('resolveAgentFixRequest', () => {
   it('maps RAG query to the v1 retrieval endpoint', () => {
@@ -45,6 +45,35 @@ describe('resolveAgentFixRequest', () => {
       fields: { id: '9', message: 'Yanit' },
     });
     expect(email.path).toBe('/api/v1/email/threads/9/reply');
+  });
+
+  it('maps RAG section reads onto the context endpoint', () => {
+    const about = resolveAgentFixRequest({ resource: 'rag', operation: 'getAbout', fields: {} });
+    const services = resolveAgentFixRequest({
+      resource: 'rag',
+      operation: 'getServices',
+      fields: {},
+    });
+    expect(about).toEqual({ method: 'GET', path: '/api/v1/rag/context' });
+    expect(services).toEqual({ method: 'GET', path: '/api/v1/rag/context' });
+  });
+
+  it('picks Hakkımızda and Hizmetler out of the compiled context payload', () => {
+    const payload = {
+      data: { about: { companyName: 'Klinik' }, services: [{ name: 'Implant' }] },
+      updatedAt: '2026-08-24',
+    };
+    expect(pickRagSection(payload, 'getAbout')).toEqual({
+      section: 'about',
+      data: { companyName: 'Klinik' },
+      updatedAt: '2026-08-24',
+    });
+    expect(pickRagSection(payload, 'getServices')).toEqual({
+      section: 'services',
+      data: [{ name: 'Implant' }],
+      updatedAt: '2026-08-24',
+    });
+    expect(pickRagSection(payload, 'query')).toEqual(payload);
   });
 
   it('rejects unknown operations instead of calling a random path', () => {

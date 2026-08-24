@@ -63,7 +63,14 @@ Token izinleri (varsayılan):
 
 ### RAG
 
-- **Get Context** — derlenmiş bilgi bankası bağlamı
+Paneldeki bilgi bankası sekmeleri:
+
+- **Get About Us (Hakkımızda)** — şirket / hekim metni
+- **Get Services (Hizmetler)** — hizmet ve fiyat kataloğu
+- **Get FAQs (SSS)**
+- **Get Persona** — asistan kişiliği
+- **Get Documents** — özel belgeler
+- **Get All Context** — hepsi birden
 - **Query** — chunk arama
 - **Chat** — asistan sorusu
 - **Sync** — bilgi bankasını güncelle

@@ -41,7 +41,13 @@ jobs:
 
       - name: Publish agentfix-sdk
         working-directory: packages/agentfix-sdk
-        run: npm publish --access public --ignore-scripts
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          if npm view "agentfix-sdk@$VER" version >/dev/null 2>&1; then
+            echo "agentfix-sdk@$VER already published, skip"
+          else
+            npm publish --access public --ignore-scripts
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -50,7 +56,13 @@ jobs:
 
       - name: Publish n8n-nodes-agentfix
         working-directory: packages/n8n-nodes-agentfix
-        run: npm publish --access public --ignore-scripts
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          if npm view "n8n-nodes-agentfix@$VER" version >/dev/null 2>&1; then
+            echo "n8n-nodes-agentfix@$VER already published, skip"
+          else
+            npm publish --access public --ignore-scripts
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
