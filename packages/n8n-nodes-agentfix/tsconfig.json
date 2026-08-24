@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["nodes/**/*", "credentials/**/*", "index.ts"],
+  "exclude": ["dist", "node_modules", "scripts"]
+}

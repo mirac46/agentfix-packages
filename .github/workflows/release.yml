@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint --workspaces --if-present
+
+      - name: Test
+        run: npm run test --workspaces --if-present
+
+      - name: Publish agentfix-sdk
+        working-directory: packages/agentfix-sdk
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Wait for SDK to propagate
+        run: sleep 30
+
+      - name: Publish n8n-nodes-agentfix
+        working-directory: packages/n8n-nodes-agentfix
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: |
+            Yeni sürüm — npm'e yayınlandı:
+
+            - [`agentfix-sdk`](https://www.npmjs.com/package/agentfix-sdk)
+            - [`n8n-nodes-agentfix`](https://www.npmjs.com/package/n8n-nodes-agentfix)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

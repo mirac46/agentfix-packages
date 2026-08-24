@@ -1,0 +1,21 @@
+{
+  "name": "agentfix-packages",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo: AgentFix SDK + n8n community nodes",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w agentfix-sdk && npm run build -w n8n-nodes-agentfix",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "verify": "npm run clean && npm run build && npm run lint && npm run test"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "license": "MIT",
+  "author": "AgentFix"
+}

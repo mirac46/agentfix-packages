@@ -1,0 +1,51 @@
+{
+  "name": "agentfix-sdk",
+  "version": "0.1.0",
+  "description": "Official AgentFix TypeScript SDK — RAG, CRM, appointments, WhatsApp and agent ingest.",
+  "keywords": [
+    "agentfix",
+    "rag",
+    "crm",
+    "appointments",
+    "sdk",
+    "typescript"
+  ],
+  "homepage": "https://github.com/mirac46/agentfix-packages#readme",
+  "bugs": {
+    "url": "https://github.com/mirac46/agentfix-packages/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mirac46/agentfix-packages.git",
+    "directory": "packages/agentfix-sdk"
+  },
+  "license": "MIT",
+  "author": "AgentFix",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run clean && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

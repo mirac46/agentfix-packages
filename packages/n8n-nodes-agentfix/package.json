@@ -1,0 +1,63 @@
+{
+  "name": "n8n-nodes-agentfix",
+  "version": "0.1.0",
+  "description": "n8n community node for AgentFix RAG, CRM, appointments and agent ingest. Powered by agentfix-sdk.",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "agentfix",
+    "rag",
+    "crm",
+    "appointments"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/mirac46/agentfix-packages#readme",
+  "author": {
+    "name": "AgentFix",
+    "email": "info@agentfix.com.tr"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mirac46/agentfix-packages.git",
+    "directory": "packages/n8n-nodes-agentfix"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && npm run build:icons",
+    "build:icons": "node scripts/copy-icons.js",
+    "clean": "rimraf dist",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run clean && npm run build && npm run lint"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/AgentFixApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/AgentFix/AgentFix.node.js"
+    ]
+  },
+  "dependencies": {
+    "agentfix-sdk": "0.1.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "n8n-workflow": "^1.82.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
