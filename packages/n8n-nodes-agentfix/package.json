@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-agentfix",
-  "version": "0.1.4",
-  "description": "Official AgentFix n8n node — RAG search/chat, write patients and appointments from AI agents, CRM, WhatsApp, email and dashboard. One API token.",
+  "version": "0.2.0",
+  "description": "Official AgentFix n8n node — RAG search/chat, agent ingest, message buffer, CRM automation, platform channels, WhatsApp, email and dashboard.",
   "keywords": [
     "n8n-community-node-package",
     "n8n",
@@ -31,24 +31,27 @@
     "build:icons": "node scripts/copy-icons.js",
     "clean": "rimraf dist",
     "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
     "prepublishOnly": "npm run clean && npm run build && npm run lint"
   },
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/AgentFixApi.credentials.js"
+      "dist/credentials/AgentFixApi.credentials.js",
+      "dist/credentials/AgentFixPlatformChannelApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/AgentFix/AgentFix.node.js"
     ]
   },
   "dependencies": {
-    "agentfix-sdk": "0.1.2"
+    "agentfix-sdk": "0.2.0"
   },
   "peerDependencies": {
     "n8n-workflow": "*"
@@ -58,7 +61,8 @@
     "@types/node": "^20.14.0",
     "n8n-workflow": "^1.82.0",
     "rimraf": "^5.0.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
   },
   "engines": {
     "node": ">=20.15"

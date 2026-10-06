@@ -14,7 +14,6 @@ npm install agentfix-sdk
 import { AgentFix } from 'agentfix-sdk';
 
 const af = new AgentFix({
-  baseUrl: 'https://agentfix.com.tr',
   apiToken: process.env.AGENTFIX_API_TOKEN!,
 });
 

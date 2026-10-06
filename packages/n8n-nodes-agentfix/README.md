@@ -5,7 +5,7 @@
 
 [AgentFix](https://agentfix.com.tr) resmi n8n community node’u. Ses/chat ajanı görüşmeyi bitirince hastayı, randevuyu ve çağrı notunu AgentFix’e yazar; bilgi bankasında arar; CRM, teklif, WhatsApp, e-posta ve panoyu aynı credential ile kullanır.
 
-Kurulum bir kez. Credential: panel API token + `https://agentfix.com.tr`.
+Kurulum bir kez. Credential: panel API token + `https://api.agentfix.com.tr`.
 
 ## Ne işe yarar
 
@@ -44,7 +44,7 @@ n8n’i yeniden başlat. Palette **AgentFix** görünür.
 
 | Alan | Değer |
 |---|---|
-| Base URL | `https://agentfix.com.tr` (self-host’ta kendi origin) |
+| Base URL | `https://api.agentfix.com.tr` (sonda `/v1` yok; self-host’ta kendi origin) |
 | API Token | Kullanıcı paneli → **API Erişimi** |
 
 Token izinleri (varsayılan):
@@ -55,11 +55,15 @@ Token izinleri (varsayılan):
 
 **Test** yeşil olmalı. Token bir kez gösterilir.
 
+0.1.x’ten kalan `https://agentfix.com.tr` kayıtları düğümde otomatik olarak `https://api.agentfix.com.tr`’ye çevrilir; credential **Test** düğmesi için adresi elle güncelleyin.
+
+**Platform Channel** kaynağı ayrı credential kullanır: **AgentFix Platform Channel API** (Base URL, kanal numarası, `afp_` ile başlayan kanal anahtarı). Test isteği `GET /v1/platform/channels/<kanal>/health`.
+
 ## Kaynaklar
 
 ### Account
 
-- **Get Current User** — token doğrula (`GET /api/v1/me`)
+- **Get Current User** — token doğrula (`GET /v1/me`)
 
 ### RAG
 
@@ -74,6 +78,7 @@ Paneldeki bilgi bankası sekmeleri:
 - **Query** — chunk arama
 - **Chat** — asistan sorusu
 - **Sync** — bilgi bankasını güncelle
+- **Live Pricing** — güncel katalog fiyatları (`GET /v1/rag/pricing`, vektör değil)
 
 ### Ingest (ajan yazımı)
 
@@ -96,6 +101,22 @@ AI / n8n akışı konuşma bitince bunları kullanır. JWT değil, API token.
 }
 ```
 
+### Message Buffer (mesaj tamponu)
+
+Art arda gelen mesajları tek yanıtta toplar; n8n’de Postgres kuyruğu + Wait kurmaya gerek kalmaz.
+
+- **Collect** — `POST /v1/ingest/message-batches/collect`: `channel` (whatsapp, messenger, instagram, web_chat), `conversationId`, `externalId`, `text`, `sentAt`. İstek bekleme süresi (en çok 30 sn) kadar açık kalır; grubu işleyecek tek çağrı `shouldProcess: true`, `batchId`, `claimToken` ve birleşik `message` alır.
+- **Complete** — `POST /v1/ingest/message-batches/complete`: `batchId`, `claimToken`.
+
+### CRM Automation
+
+- **Upsert Contact** — `POST /v1/ingest/crm-contact`: ad, telefon veya e-posta → `contactKey`.
+- **Add Note** — `POST /v1/ingest/crm-note`: `contactKey`, `text`, `externalId` (tekrarı önler).
+
+### Platform Channel
+
+Kanal anahtarıyla çalışan dış kanal uçları (`/v1/platform/channels/<kanal>/…`): Health, Send Event, Complete Event, Knowledge, Collect Messages, Complete Batch, Reply to Batch (isteğe bağlı insana devir).
+
 ### Customer / Patient
 
 Get Many, Get, Create, Update
@@ -110,7 +131,7 @@ Get Many, Save Note
 
 ### Offer
 
-Get Many, Create
+Get Many, Create — oluştururken `customerId` (sayı), tutar ve en az bir kalem (`items`: name, quantity, unit_price) zorunlu.
 
 ### WhatsApp
 
@@ -118,7 +139,7 @@ Send Message — `accountId`, telefon, metin
 
 ### Chat / Email / Services / Dashboard
 
-Paneldeki sohbet, e-posta thread yanıtı, paket listesi, pano istatistikleri.
+Paneldeki sohbet, e-posta thread yanıtı, paket listesi (kategori zorunlu: `konusma-paketleri`, `kurulum-ucretleri`, `bakim-ucretleri`), pano istatistikleri.
 
 ## Tipik akış
 
@@ -140,8 +161,7 @@ Aynı API için TypeScript SDK: [`agentfix-sdk`](https://www.npmjs.com/package/a
 import { AgentFix } from 'agentfix-sdk';
 
 const af = new AgentFix({
-  baseUrl: 'https://agentfix.com.tr',
-  apiToken: process.env.AGENTFIX_API_TOKEN!,
+  apiToken: process.env.AGENTFIX_API_TOKEN!, // baseUrl varsayılanı https://api.agentfix.com.tr
 });
 
 await af.ingest.conversation({
@@ -157,6 +177,8 @@ await af.ingest.conversation({
 **Credential kırmızı:** token paneldan yeni üret; Base URL sonunda `/` olmasın.
 
 **Ingest 403:** tokenda `customers:write` yok.
+
+**Hata kodu:** API hataları `{ error, code, details? }` döner; düğüm `code`’u hata açıklamasında, *Continue On Fail* açıkken çıktıda `error`, `code`, `status` alanlarında gösterir.
 
 **Community node görünmüyor:** `N8N_COMMUNITY_PACKAGES_ENABLED=true` ve `N8N_UNVERIFIED_PACKAGES_ENABLED=true`. Queue Mode’da paketi worker’lara da kur.
 

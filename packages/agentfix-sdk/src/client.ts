@@ -1,34 +1,32 @@
+import { toAgentFixError } from './errors';
 import {
-  AgentFixAuthError,
-  AgentFixError,
-  AgentFixNotFoundError,
-  AgentFixValidationError,
-} from './errors';
-import { pickRagSection, resolveAgentFixRequest, type ResolvedRequest } from './operations';
+  normalizeBaseUrl,
+  pickRagSection,
+  resolveAgentFixRequest,
+  type ResolvedRequest,
+} from './operations';
 
 export interface AgentFixClientConfig {
-  baseUrl: string;
+  /** Varsayılan https://api.agentfix.com.tr; eski agentfix.com.tr adresi API alan adına çevrilir. */
+  baseUrl?: string;
+  /** Kullanıcı API anahtarı; platform kanal uçlarında kanal anahtarı. */
   apiToken: string;
   timeoutMs?: number;
   defaultHeaders?: Record<string, string>;
   fetch?: typeof fetch;
 }
 
-function errorMessage(data: unknown, fallback: string): string {
-  if (data && typeof data === 'object') {
-    const rec = data as { error?: unknown; message?: unknown };
-    if (typeof rec.error === 'string' && rec.error) return rec.error;
-    if (typeof rec.message === 'string' && rec.message) return rec.message;
-  }
-  return fallback;
+export interface MessageBufferInput {
+  channel: 'whatsapp' | 'messenger' | 'instagram' | 'web_chat';
+  conversationId: string;
+  externalId: string;
+  text: string;
+  sentAt?: string;
 }
 
-function mapStatus(status: number, data: unknown): AgentFixError {
-  const message = errorMessage(data, 'AgentFix API isteği başarısız.');
-  if (status === 401 || status === 403) return new AgentFixAuthError(message);
-  if (status === 404) return new AgentFixNotFoundError(message);
-  if (status === 400 || status === 422) return new AgentFixValidationError(message, data);
-  return new AgentFixError(message, { status, response: data });
+export interface BatchClaim {
+  batchId: string;
+  claimToken: string;
 }
 
 export class AgentFix {
@@ -39,11 +37,10 @@ export class AgentFix {
   private readonly fetchImpl: typeof fetch;
 
   constructor(config: AgentFixClientConfig) {
-    if (!config.baseUrl) throw new Error('AgentFix: baseUrl gerekli.');
     if (!config.apiToken) throw new Error('AgentFix: apiToken gerekli.');
-    this.baseUrl = config.baseUrl.replace(/\/+$/, '');
+    this.baseUrl = normalizeBaseUrl(config.baseUrl);
     this.apiToken = config.apiToken;
-    this.timeoutMs = config.timeoutMs ?? 30_000;
+    this.timeoutMs = config.timeoutMs ?? 60_000;
     this.defaultHeaders = config.defaultHeaders ?? {};
     this.fetchImpl = config.fetch ?? globalThis.fetch.bind(globalThis);
   }
@@ -80,7 +77,7 @@ export class AgentFix {
           data = text;
         }
       }
-      if (!res.ok) throw mapStatus(res.status, data);
+      if (!res.ok) throw toAgentFixError(res.status, data);
       return data as T;
     } finally {
       clearTimeout(timer);
@@ -93,6 +90,10 @@ export class AgentFix {
 
   me<T = unknown>() {
     return this.call<T>('account', 'me');
+  }
+
+  health<T = unknown>() {
+    return this.call<T>('health', 'get');
   }
 
   readonly rag = {
@@ -111,6 +112,37 @@ export class AgentFix {
     chat: <T = unknown>(fields: { message: string; history?: unknown; systemPrompt?: string }) =>
       this.call<T>('rag', 'chat', fields),
     sync: <T = unknown>(fields: Record<string, unknown>) => this.call<T>('rag', 'sync', fields),
+    pricing: <T = unknown>(category?: string) => this.call<T>('rag', 'pricing', { category }),
+  };
+
+  /** Art arda gelen mesajları tek yanıtta toplar; collect bekleme süresi kadar açık kalır. */
+  readonly messageBatches = {
+    collect: <T = unknown>(fields: MessageBufferInput) => this.call<T>('messageBatches', 'collect', { ...fields }),
+    complete: <T = unknown>(fields: BatchClaim) => this.call<T>('messageBatches', 'complete', { ...fields }),
+  };
+
+  readonly crm = {
+    upsertContact: <T = unknown>(fields: { name?: string; phone?: string; email?: string; source?: string }) =>
+      this.call<T>('crm', 'upsertContact', fields),
+    addNote: <T = unknown>(fields: { contactKey: string; text: string; externalId: string }) =>
+      this.call<T>('crm', 'addNote', fields),
+  };
+
+  /** Platform kanal uçları kanal anahtarıyla çağrılır: apiToken yerine kanal anahtarını verin. */
+  readonly platformChannel = {
+    health: <T = unknown>(channelId: number) => this.call<T>('platformChannel', 'health', { channelId }),
+    sendEvent: <T = unknown>(channelId: number, fields: { externalId: string; type: string; data: Record<string, unknown> }) =>
+      this.call<T>('platformChannel', 'sendEvent', { channelId, externalId: fields.externalId, eventType: fields.type, eventData: fields.data }),
+    completeEvent: <T = unknown>(channelId: number, eventId: string, reply: string) =>
+      this.call<T>('platformChannel', 'completeEvent', { channelId, eventId, reply }),
+    knowledge: <T = unknown>(channelId: number, fields: { question: string; mode?: 'search' | 'answer'; history?: unknown }) =>
+      this.call<T>('platformChannel', 'knowledge', { channelId, ...fields }),
+    collectMessages: <T = unknown>(channelId: number, fields: MessageBufferInput) =>
+      this.call<T>('platformChannel', 'collectMessages', { channelId, ...fields }),
+    completeBatch: <T = unknown>(channelId: number, fields: BatchClaim) =>
+      this.call<T>('platformChannel', 'completeBatch', { channelId, ...fields }),
+    replyBatch: <T = unknown>(channelId: number, fields: BatchClaim & { reply: string; handoff?: boolean }) =>
+      this.call<T>('platformChannel', 'replyBatch', { channelId, ...fields }),
   };
 
   readonly ingest = {

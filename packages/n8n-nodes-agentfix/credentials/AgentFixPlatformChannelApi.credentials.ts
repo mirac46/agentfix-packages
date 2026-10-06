@@ -5,10 +5,11 @@ import type {
   INodeProperties,
 } from 'n8n-workflow';
 
-export class AgentFixApi implements ICredentialType {
-  name = 'agentFixApi';
+// Platform kanal uçları kullanıcı API anahtarını değil, kanala özel anahtarı kabul eder.
+export class AgentFixPlatformChannelApi implements ICredentialType {
+  name = 'agentFixPlatformChannelApi';
 
-  displayName = 'AgentFix API';
+  displayName = 'AgentFix Platform Channel API';
 
   icon = 'file:agentfix.png' as const;
 
@@ -24,12 +25,19 @@ export class AgentFixApi implements ICredentialType {
       description: 'AgentFix API adresi, sonda /v1 ve slash olmadan (AgentFix API base URL, without /v1 or trailing slash).',
     },
     {
-      displayName: 'API Anahtarı (API Token)',
-      name: 'apiToken',
+      displayName: 'Kanal Kimliği (Channel ID)',
+      name: 'channelId',
+      type: 'number',
+      default: 0,
+      description: 'Yönetim → Platform Kanalları ekranındaki kanal numarası (Channel number from Admin → Platform Channels).',
+    },
+    {
+      displayName: 'Kanal Anahtarı (Channel Key)',
+      name: 'channelKey',
       type: 'string',
       typeOptions: { password: true },
       default: '',
-      description: 'Kullanıcı paneli → API Erişimi (User panel → API Access).',
+      description: 'afp_ ile başlayan kanal anahtarı; yalnız üretildiğinde gösterilir (Channel key starting with afp_, shown only when generated).',
     },
   ];
 
@@ -37,7 +45,7 @@ export class AgentFixApi implements ICredentialType {
     type: 'generic',
     properties: {
       headers: {
-        Authorization: '=Bearer {{$credentials.apiToken}}',
+        Authorization: '=Bearer {{$credentials.channelKey}}',
       },
     },
   };
@@ -45,7 +53,7 @@ export class AgentFixApi implements ICredentialType {
   test: ICredentialTestRequest = {
     request: {
       baseURL: '={{$credentials.baseUrl}}',
-      url: '/v1/me',
+      url: '=/v1/platform/channels/{{$credentials.channelId}}/health',
       method: 'GET',
     },
   };
