@@ -1,0 +1,20 @@
+#!/bin/sh
+# Commit mesajından yapay zekâ araç imzalarını siler (Co-Authored-By: Claude, "Generated with ..." vb.).
+# Kural: AGENTS.md "Commit mesajı". Mesaj bir geliştiricinin yazdığı gibi kalır.
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+tmp="$msg_file.clean"
+grep -viE '^[[:space:]]*co-authored-by:.*(claude|anthropic|openai|chatgpt|copilot|codex|gemini|cursor|noreply@anthropic\.com)' "$msg_file" \
+  | grep -viE 'generated (with|by) .*(claude|chatgpt|copilot|codex|gemini|cursor|ai)' \
+  | grep -vE '🤖' > "$tmp"
+
+# Sondaki boş satırları kırp.
+awk 'NF { for (i = 0; i < blank; i++) print ""; blank = 0; print; next } { blank++ }' "$tmp" > "$msg_file"
+rm -f "$tmp"
+
+if ! grep -qvE '^[[:space:]]*(#|$)' "$msg_file"; then
+  echo "commit-msg: mesaj boş kaldı" >&2
+  exit 1
+fi
+exit 0
