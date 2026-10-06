@@ -21,6 +21,14 @@ export const FIELD_NAMES = [
   'reply', 'handoff', 'question', 'mode', 'history',
 ] as const;
 
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error !== null && typeof error === 'object' && typeof (error as { message?: unknown }).message === 'string') {
+    return (error as { message: string }).message;
+  }
+  return String(error);
+}
+
 function show(resource: string, operations: string[]) {
   return {
     show: {
@@ -701,11 +709,9 @@ export class AgentFix implements INodeType {
           continue;
         }
         if (error instanceof NodeApiError) throw error;
-        const jsonError: JsonObject =
-          error !== null && typeof error === 'object'
-            ? (error as JsonObject)
-            : { message: String(error) };
-        throw new NodeApiError(this.getNode(), jsonError, { itemIndex });
+        // Ham hata nesnesi istek yapılandırmasını (Authorization başlığı) taşıyabilir;
+        // NodeApiError onu yürütme kaydında saklar, bu yüzden yalnız mesaj geçer.
+        throw new NodeApiError(this.getNode(), { message: errorMessage(error) }, { itemIndex });
       }
     }
 

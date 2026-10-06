@@ -122,4 +122,50 @@ describe('AgentFix node execute', () => {
       status: 409,
     });
   });
+
+  it('does not carry request headers from a network error into NodeApiError', async () => {
+    const { ctx, http } = context(
+      { resource: 'crm', operation: 'addNote', contactKey: 'x', text: 'Not', externalId: 'e' },
+      { statusCode: 200, body: {} },
+    );
+    const networkError = Object.assign(new Error('connect ECONNREFUSED 10.0.0.1:443'), {
+      code: 'ECONNREFUSED',
+      config: { headers: { Authorization: 'Bearer af_secret_token' } },
+    });
+    http.mockRejectedValueOnce(networkError);
+
+    const error = await new AgentFix().execute.call(ctx as never).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(NodeApiError);
+    expect(deepText(error)).not.toContain('af_secret_token');
+  });
 });
+
+describe('AgentFix node non-HTTP errors', () => {
+  it('does not carry request headers from a thrown plain object into NodeApiError', async () => {
+    const { ctx, http } = context(
+      { resource: 'crm', operation: 'addNote', contactKey: 'x', text: 'Not', externalId: 'e' },
+      { statusCode: 200, body: {} },
+    );
+    http.mockRejectedValueOnce({
+      message: 'socket hang up',
+      config: { headers: { Authorization: 'Bearer af_secret_token' } },
+    });
+
+    const error = await new AgentFix().execute.call(ctx as never).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(NodeApiError);
+    expect((error as NodeApiError).message).toContain('socket hang up');
+    expect(deepText(error)).not.toContain('af_secret_token');
+  });
+});
+
+/** Döngüsel ve sayılamayan alanlar dahil nesnenin bütün metnini toplar. */
+function deepText(value: unknown, seen = new WeakSet<object>()): string {
+  if (value === null || typeof value !== 'object') return String(value);
+  if (seen.has(value)) return '';
+  seen.add(value);
+  return Object.getOwnPropertyNames(value)
+    .map((key) => `${key}:${deepText((value as Record<string, unknown>)[key], seen)}`)
+    .join('|');
+}
