@@ -25,3 +25,5 @@ Düzeltmeler:
 - Email → Reply gövdesi `bodyText` (önceki `text` alanı reddediliyordu).
 - Offer → Create: `customer_id` sayı, `amount` ve zorunlu `items` kalemleri gönderilir.
 - Services → Get Packages kategori parametresini gönderir; kategori boşsa istek gönderilmeden hata verilir.
+- Ağ ve zaman aşımı gibi HTTP dışı hatalarda düğüm hatası yalnız mesajı taşır; istek başlıkları (API anahtarı) yürütme
+  kaydına düşmez.
