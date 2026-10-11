@@ -1,5 +1,21 @@
 # Değişiklikler
 
+## 0.3.0
+
+Yeni:
+
+- Platform Channel → **Contact Context** (`GET /v1/platform/channels/:kanal/contacts/:kişi/context`): kişinin kayıtlı
+  kullanıcı, potansiyel müşteri ve son talep özeti.
+- Platform Channel → **Upsert Lead** (`POST /v1/platform/channels/:kanal/contacts/:kişi/lead`): ad, kurum, hizmet, özet,
+  e-posta, telefon ve `needs` nesnesi. Boş alan gönderilmez; `needs` en çok 30 anahtar, `summary` en çok 4000 karakter
+  olarak istekten önce denetlenir.
+- SDK: `platformChannel.contactContext()` ve `platformChannel.upsertLead()`; `ContactContext`, `LeadUpsertInput`,
+  `LeadUpsertResult` tipleri.
+
+Değişiklikler:
+
+- `agentfix-sdk` 0.3.0'a yükseltildi.
+
 ## 0.2.0
 
 Yeni:
