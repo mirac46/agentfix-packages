@@ -36,6 +36,7 @@ Token: kullanıcı paneli → API Erişimi. İzinler: `rag:read`, `rag:write`, `
 |---|---|
 | Account | `me()` |
 | RAG | `rag.context()` `rag.query()` `rag.chat()` `rag.sync()` |
+| Platform Channel | `platformChannel.health()` `sendEvent()` `completeEvent()` `knowledge()` `collectMessages()` `completeBatch()` `replyBatch()` `contactContext()` `upsertLead()` |
 | Ingest | `ingest.customer()` `ingest.appointment()` `ingest.callNote()` `ingest.conversation()` |
 | Customers | `customers.list()` `customers.get()` `customers.create()` `customers.update()` |
 | Appointments | `appointments.list()` `appointments.create()` `appointments.complete()` `appointments.cancel()` |
@@ -46,5 +47,18 @@ Token: kullanıcı paneli → API Erişimi. İzinler: `rag:read`, `rag:write`, `
 | Email | `email.listThreads()` `email.reply()` |
 | Services | `services.getPackages()` |
 | Dashboard | `dashboard.get()` |
+
+Platform kanal uçlarında `apiToken` yerine `afp_` kanal anahtarı verilir:
+
+```ts
+const channel = new AgentFix({ apiToken: process.env.AGENTFIX_CHANNEL_KEY! });
+const ctx = await channel.platformChannel.contactContext(7, '+905551112233');
+const { lead, created } = await channel.platformChannel.upsertLead(7, '+905551112233', {
+  organization: 'Örnek Diş Kliniği',
+  needs: { city: 'Ankara', channels: ['whatsapp'], staffCount: 6 },
+});
+```
+
+Boş bırakılan alan gönderilmez; sunucu kayıttaki değeri korur.
 
 n8n için ayrı paket: [`n8n-nodes-agentfix`](https://www.npmjs.com/package/n8n-nodes-agentfix).

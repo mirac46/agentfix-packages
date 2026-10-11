@@ -214,3 +214,74 @@ describe('current v1 contract', () => {
     expect(() => resolve('account', 'constructor')).toThrow(/Unsupported/);
   });
 });
+
+describe('platform channel contacts', () => {
+  const resolve = (operation: string, fields: Record<string, unknown>) =>
+    resolveAgentFixRequest({ resource: 'platformChannel', operation, fields });
+
+  it('encodes the contact into the context path', () => {
+    expect(resolve('contactContext', { channelId: 7, contact: '+90 555 111/22' })).toEqual({
+      method: 'GET',
+      path: '/v1/platform/channels/7/contacts/%2B90%20555%20111%2F22/context',
+    });
+    expect(resolve('contactContext', { channelId: 7, contact: 'ayse@example.com' }).path).toBe(
+      '/v1/platform/channels/7/contacts/ayse%40example.com/context',
+    );
+  });
+
+  it('refuses contact calls without a contact', () => {
+    expect(() => resolve('contactContext', { channelId: 7, contact: '  ' })).toThrow(/Kişi gerekli/);
+    expect(() => resolve('upsertLead', { channelId: 7 })).toThrow(/Kişi gerekli/);
+  });
+
+  it('posts only the lead fields that were filled in', () => {
+    expect(
+      resolve('upsertLead', {
+        channelId: 7,
+        contact: '905551112233',
+        name: ' Ayşe Yılmaz ',
+        organization: '',
+        serviceName: '   ',
+        summary: 'Randevu otomasyonu soruyor.',
+        email: '',
+        phone: undefined,
+        needs: '{"city":"Ankara","channels":["whatsapp","instagram"],"monthlyVolume":1200,"hasCrm":false}',
+      }),
+    ).toEqual({
+      method: 'POST',
+      path: '/v1/platform/channels/7/contacts/905551112233/lead',
+      body: {
+        name: 'Ayşe Yılmaz',
+        summary: 'Randevu otomasyonu soruyor.',
+        needs: { city: 'Ankara', channels: ['whatsapp', 'instagram'], monthlyVolume: 1200, hasCrm: false },
+      },
+    });
+  });
+
+  it('sends an empty body when nothing was filled in, including an empty needs object', () => {
+    expect(resolve('upsertLead', { channelId: 7, contact: 'c1', needs: '{}' }).body).toEqual({});
+    expect(resolve('upsertLead', { channelId: 7, contact: 'c1', needs: '' }).body).toEqual({});
+    expect(resolve('upsertLead', { channelId: 7, contact: 'c1', needs: { staffCount: 4 } }).body).toEqual({
+      needs: { staffCount: 4 },
+    });
+  });
+
+  it('rejects needs that the server would refuse', () => {
+    expect(() => resolve('upsertLead', { channelId: 7, contact: 'c', needs: '["a"]' })).toThrow(/JSON nesnesi/);
+    expect(() => resolve('upsertLead', { channelId: 7, contact: 'c', needs: { city: { name: 'x' } } })).toThrow(
+      /"city"/,
+    );
+    expect(() => resolve('upsertLead', { channelId: 7, contact: 'c', needs: { tools: ['a', 1] } })).toThrow(
+      /"tools"/,
+    );
+    const tooMany = Object.fromEntries(Array.from({ length: 31 }, (_, i) => [`k${i}`, i]));
+    expect(() => resolve('upsertLead', { channelId: 7, contact: 'c', needs: tooMany })).toThrow(/30 anahtar/);
+  });
+
+  it('rejects a summary longer than 4000 characters', () => {
+    expect(resolve('upsertLead', { channelId: 7, contact: 'c', summary: 'a'.repeat(4000) }).body?.summary).toHaveLength(
+      4000,
+    );
+    expect(() => resolve('upsertLead', { channelId: 7, contact: 'c', summary: 'a'.repeat(4001) })).toThrow(/4000/);
+  });
+});

@@ -18,7 +18,8 @@ export const FIELD_NAMES = [
   'duration', 'location', 'description', 'status', 'source', 'systemPrompt',
   'category', 'amount', 'items', 'channel', 'conversationId', 'externalId', 'text',
   'sentAt', 'batchId', 'claimToken', 'contactKey', 'eventType', 'eventData', 'eventId',
-  'reply', 'handoff', 'question', 'mode', 'history',
+  'reply', 'handoff', 'question', 'mode', 'history', 'contact', 'organization',
+  'serviceName', 'needs',
 ] as const;
 
 function errorMessage(error: unknown): string {
@@ -169,6 +170,8 @@ export class AgentFix implements INodeType {
           { name: 'Mesajları Topla (Collect Messages)', value: 'collectMessages', action: 'Kanal mesajlarını tek grupta topla (Collect channel messages into one batch)' },
           { name: 'Grubu Tamamla (Complete Batch)', value: 'completeBatch', action: 'Kanal mesaj grubunu kapat (Close a channel message batch)' },
           { name: 'Gruba Yanıt Gönder (Reply to Batch)', value: 'replyBatch', action: 'Mesaj grubuna yanıtı kanaldan gönder (Send the batch reply through the channel)' },
+          { name: 'Kişi Bağlamı (Contact Context)', value: 'contactContext', action: 'Kişinin hesap, potansiyel müşteri ve talep özetini getir (Get the contact account, lead and request summary)' },
+          { name: 'Potansiyel Müşteri Yaz (Upsert Lead)', value: 'upsertLead', action: 'Kişinin potansiyel müşteri kaydını oluştur ya da güncelle (Create or update the contact lead)' },
         ],
         default: 'health',
       },
@@ -301,10 +304,11 @@ export class AgentFix implements INodeType {
         name: 'name',
         type: 'string',
         default: '',
+        description: 'Kişinin adı soyadı; boşsa değiştirilmez (Full name of the contact; left unchanged when empty).',
         displayOptions: {
           show: {
-            resource: ['ingest', 'customers', 'calls', 'crm'],
-            operation: ['customer', 'conversation', 'create', 'update', 'createNote', 'callNote', 'upsertContact'],
+            resource: ['ingest', 'customers', 'calls', 'crm', PLATFORM_CHANNEL],
+            operation: ['customer', 'conversation', 'create', 'update', 'createNote', 'callNote', 'upsertContact', 'upsertLead'],
           },
         },
       },
@@ -313,10 +317,11 @@ export class AgentFix implements INodeType {
         name: 'phone',
         type: 'string',
         default: '',
+        description: 'Ülke kodlu telefon numarası, ör. +905551112233 (Phone number with country code).',
         displayOptions: {
           show: {
-            resource: ['ingest', 'customers', 'calls', 'whatsapp', 'crm'],
-            operation: ['customer', 'appointment', 'callNote', 'conversation', 'create', 'update', 'createNote', 'sendMessage', 'upsertContact'],
+            resource: ['ingest', 'customers', 'calls', 'whatsapp', 'crm', PLATFORM_CHANNEL],
+            operation: ['customer', 'appointment', 'callNote', 'conversation', 'create', 'update', 'createNote', 'sendMessage', 'upsertContact', 'upsertLead'],
           },
         },
       },
@@ -325,10 +330,11 @@ export class AgentFix implements INodeType {
         name: 'email',
         type: 'string',
         default: '',
+        description: 'Kişinin e-posta adresi (Email address of the contact).',
         displayOptions: {
           show: {
-            resource: ['ingest', 'customers', 'crm'],
-            operation: ['customer', 'conversation', 'create', 'update', 'upsertContact'],
+            resource: ['ingest', 'customers', 'crm', PLATFORM_CHANNEL],
+            operation: ['customer', 'conversation', 'create', 'update', 'upsertContact', 'upsertLead'],
           },
         },
       },
@@ -619,6 +625,48 @@ export class AgentFix implements INodeType {
         displayOptions: {
           show: { resource: ['rag', PLATFORM_CHANNEL], operation: ['chat', 'knowledge'] },
         },
+      },
+      {
+        displayName: 'Kişi (Contact)',
+        name: 'contact',
+        type: 'string',
+        default: '',
+        required: true,
+        description: 'Kanaldaki kişi kimliği: WhatsApp için telefon, diğer kanallarda gönderen kimliği (Contact ID on the channel: phone for WhatsApp, sender ID elsewhere).',
+        displayOptions: show(PLATFORM_CHANNEL, ['contactContext', 'upsertLead']),
+      },
+      {
+        displayName: 'Kurum (Organization)',
+        name: 'organization',
+        type: 'string',
+        default: '',
+        description: 'Kişinin çalıştığı kurum, ör. klinik adı; boşsa değiştirilmez (Organization of the contact, e.g. clinic name; unchanged when empty).',
+        displayOptions: show(PLATFORM_CHANNEL, ['upsertLead']),
+      },
+      {
+        displayName: 'İlgilendiği Hizmet (Service Name)',
+        name: 'serviceName',
+        type: 'string',
+        default: '',
+        description: 'Kişinin sorduğu hizmet ya da paket (Service or package the contact asked about).',
+        displayOptions: show(PLATFORM_CHANNEL, ['upsertLead']),
+      },
+      {
+        displayName: 'Özet (Summary)',
+        name: 'summary',
+        type: 'string',
+        typeOptions: { rows: 4 },
+        default: '',
+        description: 'Görüşmenin kısa özeti, en çok 4000 karakter (Short conversation summary, up to 4000 characters).',
+        displayOptions: show(PLATFORM_CHANNEL, ['upsertLead']),
+      },
+      {
+        displayName: 'İhtiyaçlar (Needs)',
+        name: 'needs',
+        type: 'json',
+        default: '{}',
+        description: 'En çok 30 anahtarlı JSON nesnesi; değer metin, sayı, doğru/yanlış ya da metin listesi. Önerilen anahtarlar: organizationName, organizationType, city, channels, monthlyVolume, staffCount, currentTools, timeline (JSON object, up to 30 keys; values are string, number, boolean or string list).',
+        displayOptions: show(PLATFORM_CHANNEL, ['upsertLead']),
       },
       {
         displayName: 'Hesap Kimliği (Account ID)',

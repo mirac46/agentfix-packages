@@ -113,6 +113,63 @@ const batchClaim = (fields: Fields) => compact({ batchId: fields.batchId, claimT
 const channelPath = (fields: Fields, path: string): string =>
   v1(`/platform/channels/${segment(fields.channelId, 'Kanal kimliği')}${path}`);
 
+const LEAD_SUMMARY_MAX = 4000;
+const LEAD_NEEDS_MAX_KEYS = 30;
+
+function trimmed(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.trim();
+  return text || undefined;
+}
+
+function isNeedsValue(value: unknown): boolean {
+  if (typeof value === 'string' || typeof value === 'boolean') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
+// Sunucu gelmeyen alanı korur; boş nesne de "değişiklik yok" demektir, gövdeye girmez.
+function leadNeeds(value: unknown): Record<string, unknown> | undefined {
+  const parsed = json(value);
+  if (parsed === undefined || parsed === null) return undefined;
+  if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('İhtiyaçlar (needs) bir JSON nesnesi olmalı.');
+  }
+  const entries = Object.entries(parsed as Record<string, unknown>);
+  if (entries.length === 0) return undefined;
+  if (entries.length > LEAD_NEEDS_MAX_KEYS) {
+    throw new Error(`İhtiyaçlar (needs) en çok ${LEAD_NEEDS_MAX_KEYS} anahtar içerebilir.`);
+  }
+  for (const [key, entry] of entries) {
+    if (!isNeedsValue(entry)) {
+      throw new Error(`İhtiyaçlar (needs) "${key}" değeri metin, sayı, doğru/yanlış ya da metin listesi olmalı.`);
+    }
+  }
+  return parsed as Record<string, unknown>;
+}
+
+function leadSummary(value: unknown): string | undefined {
+  const text = trimmed(value);
+  if (text && text.length > LEAD_SUMMARY_MAX) {
+    throw new Error(`Özet (summary) en çok ${LEAD_SUMMARY_MAX} karakter olabilir.`);
+  }
+  return text;
+}
+
+const leadPayload = (fields: Fields) =>
+  compact({
+    name: trimmed(fields.name),
+    organization: trimmed(fields.organization),
+    serviceName: trimmed(fields.serviceName),
+    summary: leadSummary(fields.summary),
+    email: trimmed(fields.email),
+    phone: trimmed(fields.phone),
+    needs: leadNeeds(fields.needs),
+  });
+
+const contactPath = (fields: Fields, path: string): string =>
+  channelPath(fields, `/contacts/${segment(fields.contact, 'Kişi')}${path}`);
+
 const ragContext: Resolver = () => ({ method: 'GET', path: v1('/rag/context') });
 
 const OPERATIONS: Record<string, Record<string, Resolver>> = {
@@ -203,6 +260,8 @@ const OPERATIONS: Record<string, Record<string, Resolver>> = {
       path: channelPath(f, '/message-batches/reply'),
       body: compact({ ...batchClaim(f), reply: f.reply, handoff: f.handoff === true ? true : undefined }),
     }),
+    contactContext: (f) => ({ method: 'GET', path: contactPath(f, '/context') }),
+    upsertLead: (f) => ({ method: 'POST', path: contactPath(f, '/lead'), body: leadPayload(f) }),
   },
   customers: {
     getAll: (f) => ({

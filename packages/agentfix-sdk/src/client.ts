@@ -1,3 +1,4 @@
+import type { ContactContext, LeadUpsertInput, LeadUpsertResult } from './contacts';
 import { toAgentFixError } from './errors';
 import {
   normalizeBaseUrl,
@@ -143,6 +144,12 @@ export class AgentFix {
       this.call<T>('platformChannel', 'completeBatch', { channelId, ...fields }),
     replyBatch: <T = unknown>(channelId: number, fields: BatchClaim & { reply: string; handoff?: boolean }) =>
       this.call<T>('platformChannel', 'replyBatch', { channelId, ...fields }),
+    /** Kanaldaki kişinin kayıtlı kullanıcı, potansiyel müşteri ve son talep özetini getirir. */
+    contactContext: <T = ContactContext>(channelId: number, contact: string) =>
+      this.call<T>('platformChannel', 'contactContext', { channelId, contact }),
+    /** Kişinin potansiyel müşteri kaydını oluşturur ya da günceller; boş alan gönderilmez. */
+    upsertLead: <T = LeadUpsertResult>(channelId: number, contact: string, fields: LeadUpsertInput = {}) =>
+      this.call<T>('platformChannel', 'upsertLead', { ...fields, channelId, contact }),
   };
 
   readonly ingest = {

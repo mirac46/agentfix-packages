@@ -117,6 +117,12 @@ Art arda gelen mesajları tek yanıtta toplar; n8n’de Postgres kuyruğu + Wait
 
 Kanal anahtarıyla çalışan dış kanal uçları (`/v1/platform/channels/<kanal>/…`): Health, Send Event, Complete Event, Knowledge, Collect Messages, Complete Batch, Reply to Batch (isteğe bağlı insana devir).
 
+- **Contact Context** — `GET /v1/platform/channels/<kanal>/contacts/<kişi>/context`: kişinin kayıtlı kullanıcı özeti
+  (maskeli e-posta, aktif paketler), potansiyel müşteri kaydı ve son talepleri.
+- **Upsert Lead** — `POST /v1/platform/channels/<kanal>/contacts/<kişi>/lead`: ad, kurum, hizmet, özet (≤4000), e-posta,
+  telefon ve `needs` (≤30 anahtarlı JSON nesne). Boş bırakılan alan gönderilmez, kayıttaki değer korunur. Yanıt
+  `{ lead, created }`.
+
 ### Customer / Patient
 
 Get Many, Get, Create, Update

@@ -1,4 +1,14 @@
 export { AgentFix, type AgentFixClientConfig, type BatchClaim, type MessageBufferInput } from './client';
+export type {
+  ContactContext,
+  ContactLead,
+  ContactRequest,
+  ContactUser,
+  LeadNeeds,
+  LeadNeedsValue,
+  LeadUpsertInput,
+  LeadUpsertResult,
+} from './contacts';
 export {
   AgentFixAuthError,
   AgentFixError,

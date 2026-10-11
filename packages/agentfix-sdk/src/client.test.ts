@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AgentFix } from './client';
-import { AgentFixAuthError, AgentFixError, parseApiError } from './errors';
+import {
+  AgentFixAuthError,
+  AgentFixError,
+  AgentFixNotFoundError,
+  AgentFixValidationError,
+  parseApiError,
+} from './errors';
 
 describe('AgentFix client', () => {
   it('sends Bearer token and posts RAG query', async () => {
@@ -71,5 +77,61 @@ describe('AgentFix client', () => {
       code: null,
     });
     expect(parseApiError(502, '<html>Bad gateway</html>').message).toBe('AgentFix API isteği başarısız (HTTP 502).');
+  });
+
+  it('reads contact context with the channel key and an encoded contact', async () => {
+    const context = { contact: '+905551112233', channelKind: 'whatsapp', user: null, lead: null, recentRequests: [] };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toBe('https://api.agentfix.com.tr/v1/platform/channels/3/contacts/%2B905551112233/context');
+      expect(init?.method).toBe('GET');
+      expect(init?.body).toBeUndefined();
+      expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer afp_test');
+      return new Response(JSON.stringify(context), { status: 200 });
+    });
+    const af = new AgentFix({ apiToken: 'afp_test', fetch: fetchMock as unknown as typeof fetch });
+    await expect(af.platformChannel.contactContext(3, '+905551112233')).resolves.toEqual(context);
+  });
+
+  it('posts only filled lead fields and returns the created flag', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toBe('https://api.agentfix.com.tr/v1/platform/channels/3/contacts/c-1/lead');
+      expect(JSON.parse(String(init?.body))).toEqual({ organization: 'Diş Kliniği', needs: { staffCount: 6 } });
+      return new Response(JSON.stringify({ lead: { id: 9 }, created: true }), { status: 201 });
+    });
+    const af = new AgentFix({ apiToken: 'afp_test', fetch: fetchMock as unknown as typeof fetch });
+    const result = await af.platformChannel.upsertLead(3, 'c-1', {
+      name: '',
+      organization: 'Diş Kliniği',
+      needs: { staffCount: 6 },
+    });
+    expect(result).toEqual({ lead: { id: 9 }, created: true });
+  });
+
+  it('maps contact endpoint errors to typed errors with the server code', async () => {
+    const respond = (status: number, body: unknown) =>
+      vi.fn(async () => new Response(JSON.stringify(body), { status }));
+    const client = (fetchMock: ReturnType<typeof respond>) =>
+      new AgentFix({ apiToken: 'afp_test', fetch: fetchMock as unknown as typeof fetch });
+
+    const notFound = client(respond(404, { error: 'Kişi bulunamadı.', code: 'CONTACT_NOT_FOUND' }));
+    await expect(notFound.platformChannel.contactContext(3, 'x')).rejects.toSatisfy(
+      (e: unknown) => e instanceof AgentFixNotFoundError && e.code === 'CONTACT_NOT_FOUND' && e.status === 404,
+    );
+
+    const invalid = client(
+      respond(422, { error: 'Geçersiz alan.', code: 'VALIDATION_FAILED', details: { field: 'email' } }),
+    );
+    await expect(invalid.platformChannel.upsertLead(3, 'x', { email: 'bozuk' })).rejects.toSatisfy(
+      (e: unknown) =>
+        e instanceof AgentFixValidationError &&
+        e.code === 'VALIDATION_FAILED' &&
+        e.status === 422 &&
+        JSON.stringify(e.details) === '{"field":"email"}',
+    );
+
+    const badKey = client(respond(401, { error: 'Kanal anahtarı geçersiz.', code: 'INVALID_CHANNEL_KEY' }));
+    await expect(badKey.platformChannel.upsertLead(3, 'x')).rejects.toSatisfy(
+      (e: unknown) => e instanceof AgentFixAuthError && e.code === 'INVALID_CHANNEL_KEY',
+    );
   });
 });
