@@ -1,4 +1,13 @@
-import type { AgentConfig, ContactContext, LeadUpsertInput, LeadUpsertResult } from './contacts';
+import type {
+  AgentConfig,
+  AppointmentAvailability,
+  AppointmentAvailabilityQuery,
+  AppointmentCreateInput,
+  AppointmentCreateResult,
+  ContactContext,
+  LeadUpsertInput,
+  LeadUpsertResult,
+} from './contacts';
 import { toAgentFixError } from './errors';
 import {
   normalizeBaseUrl,
@@ -152,6 +161,12 @@ export class AgentFix {
     /** Kişinin potansiyel müşteri kaydını oluşturur ya da günceller; boş alan gönderilmez. */
     upsertLead: <T = LeadUpsertResult>(channelId: number, contact: string, fields: LeadUpsertInput = {}) =>
       this.call<T>('platformChannel', 'upsertLead', { ...fields, channelId, contact }),
+    /** AgentFix satış görüşmesi için boş saatler; günler ve saatler yönetici ayarından gelir. */
+    appointmentAvailability: <T = AppointmentAvailability>(channelId: number, query: AppointmentAvailabilityQuery = {}) =>
+      this.call<T>('platformChannel', 'appointmentAvailability', { ...query, channelId }),
+    /** Kişiye randevu açar; kişinin yaklaşan randevusu varsa yenisi açılmaz, mevcut olan döner. */
+    createAppointment: <T = AppointmentCreateResult>(channelId: number, contact: string, fields: AppointmentCreateInput) =>
+      this.call<T>('platformChannel', 'createAppointment', { ...fields, channelId, contact }),
   };
 
   readonly ingest = {

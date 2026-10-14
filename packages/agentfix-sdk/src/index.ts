@@ -1,6 +1,11 @@
 export { AgentFix, type AgentFixClientConfig, type BatchClaim, type MessageBufferInput } from './client';
 export type {
   AgentConfig,
+  AppointmentAvailability,
+  AppointmentAvailabilityQuery,
+  AppointmentCreateInput,
+  AppointmentCreateResult,
+  AvailabilitySlot,
   ContactContext,
   ContactLead,
   ContactRequest,

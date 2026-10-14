@@ -19,7 +19,7 @@ export const FIELD_NAMES = [
   'category', 'amount', 'items', 'channel', 'conversationId', 'externalId', 'text',
   'sentAt', 'batchId', 'claimToken', 'contactKey', 'eventType', 'eventData', 'eventId',
   'reply', 'handoff', 'question', 'mode', 'history', 'contact', 'organization',
-  'serviceName', 'needs',
+  'serviceName', 'needs', 'startsAt', 'from', 'days',
 ] as const;
 
 function errorMessage(error: unknown): string {
@@ -173,6 +173,8 @@ export class AgentFix implements INodeType {
           { name: 'Gruba Yanıt Gönder (Reply to Batch)', value: 'replyBatch', action: 'Mesaj grubuna yanıtı kanaldan gönder (Send the batch reply through the channel)' },
           { name: 'Kişi Bağlamı (Contact Context)', value: 'contactContext', action: 'Kişinin hesap, potansiyel müşteri ve talep özetini getir (Get the contact account, lead and request summary)' },
           { name: 'Potansiyel Müşteri Yaz (Upsert Lead)', value: 'upsertLead', action: 'Kişinin potansiyel müşteri kaydını oluştur ya da güncelle (Create or update the contact lead)' },
+          { name: 'Randevu Uygunluğu (Appointment Availability)', value: 'appointmentAvailability', action: 'Görüşme için boş saatleri getir (Get open slots for a meeting)' },
+          { name: 'Randevu Oluştur (Create Appointment)', value: 'createAppointment', action: 'Kişiye görüşme randevusu aç (Book a meeting for the contact)' },
         ],
         default: 'health',
       },
@@ -309,7 +311,7 @@ export class AgentFix implements INodeType {
         displayOptions: {
           show: {
             resource: ['ingest', 'customers', 'calls', 'crm', PLATFORM_CHANNEL],
-            operation: ['customer', 'conversation', 'create', 'update', 'createNote', 'callNote', 'upsertContact', 'upsertLead'],
+            operation: ['customer', 'conversation', 'create', 'update', 'createNote', 'callNote', 'upsertContact', 'upsertLead', 'createAppointment'],
           },
         },
       },
@@ -634,7 +636,7 @@ export class AgentFix implements INodeType {
         default: '',
         required: true,
         description: 'Kanaldaki kişi kimliği: WhatsApp için telefon, diğer kanallarda gönderen kimliği (Contact ID on the channel: phone for WhatsApp, sender ID elsewhere).',
-        displayOptions: show(PLATFORM_CHANNEL, ['contactContext', 'upsertLead']),
+        displayOptions: show(PLATFORM_CHANNEL, ['contactContext', 'upsertLead', 'createAppointment']),
       },
       {
         displayName: 'Kurum (Organization)',
@@ -658,8 +660,8 @@ export class AgentFix implements INodeType {
         type: 'string',
         typeOptions: { rows: 4 },
         default: '',
-        description: 'Görüşmenin kısa özeti, en çok 4000 karakter (Short conversation summary, up to 4000 characters).',
-        displayOptions: show(PLATFORM_CHANNEL, ['upsertLead']),
+        description: 'Görüşmenin ya da keşif yanıtlarının kısa özeti, en çok 4000 karakter (Short conversation or discovery summary, up to 4000 characters).',
+        displayOptions: show(PLATFORM_CHANNEL, ['upsertLead', 'createAppointment']),
       },
       {
         displayName: 'İhtiyaçlar (Needs)',
@@ -668,6 +670,31 @@ export class AgentFix implements INodeType {
         default: '{}',
         description: 'En çok 30 anahtarlı JSON nesnesi; değer metin, sayı, doğru/yanlış ya da metin listesi. Önerilen anahtarlar: organizationName, organizationType, city, channels, monthlyVolume, staffCount, currentTools, timeline (JSON object, up to 30 keys; values are string, number, boolean or string list).',
         displayOptions: show(PLATFORM_CHANNEL, ['upsertLead']),
+      },
+      {
+        displayName: 'Randevu Saati (Starts At)',
+        name: 'startsAt',
+        type: 'string',
+        default: '',
+        required: true,
+        description: 'Uygunluk yanıtındaki startsAt değeri, ISO 8601 (The startsAt value from the availability response, ISO 8601).',
+        displayOptions: show(PLATFORM_CHANNEL, ['createAppointment']),
+      },
+      {
+        displayName: 'İlk Gün (From)',
+        name: 'from',
+        type: 'string',
+        default: '',
+        description: 'YYYY-MM-DD; boşsa bugün (YYYY-MM-DD; today when empty).',
+        displayOptions: show(PLATFORM_CHANNEL, ['appointmentAvailability']),
+      },
+      {
+        displayName: 'Gün Sayısı (Days)',
+        name: 'days',
+        type: 'number',
+        default: 0,
+        description: 'Taranacak gün sayısı; 0 ise ayardaki ufuk (Number of days to scan; 0 uses the configured horizon).',
+        displayOptions: show(PLATFORM_CHANNEL, ['appointmentAvailability']),
       },
       {
         displayName: 'Hesap Kimliği (Account ID)',
@@ -683,8 +710,8 @@ export class AgentFix implements INodeType {
         default: 20,
         displayOptions: {
           show: {
-            resource: ['rag', 'customers', 'appointments', 'calls', 'offers'],
-            operation: ['query', 'getAll'],
+            resource: ['rag', 'customers', 'appointments', 'calls', 'offers', PLATFORM_CHANNEL],
+            operation: ['query', 'getAll', 'appointmentAvailability'],
           },
         },
       },

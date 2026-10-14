@@ -290,3 +290,32 @@ describe('platform channel contacts', () => {
     expect(() => resolve('upsertLead', { channelId: 7, contact: 'c', summary: 'a'.repeat(4001) })).toThrow(/4000/);
   });
 });
+
+describe('platform channel appointments', () => {
+  const resolve = (operation: string, fields: Record<string, unknown>) =>
+    resolveAgentFixRequest({ resource: 'platformChannel', operation, fields });
+
+  it('asks availability with only the given query values', () => {
+    expect(resolve('appointmentAvailability', { channelId: 7, from: '', days: 0, limit: 6 })).toEqual({
+      method: 'GET',
+      path: '/v1/platform/channels/7/appointments/availability',
+      qs: { limit: 6 },
+    });
+    expect(resolve('appointmentAvailability', { channelId: 7, from: '2026-10-17', days: 7 }).qs).toEqual({ from: '2026-10-17', days: 7 });
+  });
+
+  it('books a slot for the contact and drops empty fields', () => {
+    expect(
+      resolve('createAppointment', { channelId: 7, contact: '+90 555', startsAt: ' 2026-10-17T07:00:00.000Z ', summary: '', name: 'Ayşe' }),
+    ).toEqual({
+      method: 'POST',
+      path: '/v1/platform/channels/7/contacts/%2B90%20555/appointments',
+      body: { startsAt: '2026-10-17T07:00:00.000Z', name: 'Ayşe' },
+    });
+  });
+
+  it('refuses booking without a contact or a slot', () => {
+    expect(() => resolve('createAppointment', { channelId: 7, startsAt: '2026-10-17T07:00:00Z' })).toThrow(/Kişi gerekli/);
+    expect(() => resolve('createAppointment', { channelId: 7, contact: 'c' })).toThrow(/Randevu saati/);
+  });
+});

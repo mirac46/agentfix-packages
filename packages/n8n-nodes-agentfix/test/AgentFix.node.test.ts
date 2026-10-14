@@ -233,6 +233,61 @@ describe('AgentFix node platform contacts', () => {
   });
 });
 
+describe('AgentFix node platform appointments', () => {
+  it('offers availability and booking with described fields for AI tool use', () => {
+    const operationProp = properties.find(
+      (p) => p.name === 'operation' && p.displayOptions?.show?.resource?.includes('platformChannel'),
+    )!;
+    expect(optionValues(operationProp)).toEqual(expect.arrayContaining(['appointmentAvailability', 'createAppointment']));
+    for (const name of ['contact', 'startsAt', 'summary', 'name']) {
+      const field = properties.find((p) => p.name === name && p.displayOptions?.show?.operation?.includes('createAppointment'));
+      expect(field, name).toBeDefined();
+      expect(field?.description, name).toMatch(/\(.+\)/);
+    }
+  });
+
+  it('asks open slots with only the filled query values', async () => {
+    const body = { enabled: true, timeZone: 'Europe/Istanbul', slotMinutes: 30, allowedDays: ['Cumartesi', 'Pazar'], message: 'Hafta içi doluyuz', days: [] };
+    const { ctx, http } = context(
+      { resource: 'platformChannel', operation: 'appointmentAvailability', from: '', days: 0, limit: 8 },
+      { statusCode: 200, body },
+    );
+    const out = await new AgentFix().execute.call(ctx as never);
+    expect(http).toHaveBeenCalledWith('agentFixPlatformChannelApi', expect.objectContaining({
+      method: 'GET',
+      url: 'https://api.agentfix.com.tr/v1/platform/channels/7/appointments/availability',
+      qs: { limit: 8 },
+      body: undefined,
+    }));
+    expect(out[0][0].json).toEqual(body);
+  });
+
+  it('books the slot for the encoded contact', async () => {
+    const { ctx, http } = context(
+      { resource: 'platformChannel', operation: 'createAppointment', contact: '+905551112233', startsAt: '2026-10-17T07:00:00.000Z', summary: 'Diş kliniği, İzmir', name: '' },
+      { statusCode: 201, body: { created: true, confirmation: 'Randevunuz alındı.', appointment: { id: 3 } } },
+    );
+    const out = await new AgentFix().execute.call(ctx as never);
+    expect(http).toHaveBeenCalledWith('agentFixPlatformChannelApi', expect.objectContaining({
+      method: 'POST',
+      url: 'https://api.agentfix.com.tr/v1/platform/channels/7/contacts/%2B905551112233/appointments',
+      body: { startsAt: '2026-10-17T07:00:00.000Z', summary: 'Diş kliniği, İzmir' },
+    }));
+    expect(out[0][0].json).toMatchObject({ created: true, confirmation: 'Randevunuz alındı.' });
+  });
+
+  it('stops before sending when the slot is missing', async () => {
+    const { ctx, http } = context(
+      { resource: 'platformChannel', operation: 'createAppointment', contact: 'c1', startsAt: ' ' },
+      { statusCode: 201, body: {} },
+    );
+    const error = await new AgentFix().execute.call(ctx as never).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(NodeApiError);
+    expect((error as Error).message).toMatch(/Randevu saati/);
+    expect(http).not.toHaveBeenCalled();
+  });
+});
+
 describe('AgentFix node non-HTTP errors', () => {
   it('does not carry request headers from a thrown plain object into NodeApiError', async () => {
     const { ctx, http } = context(

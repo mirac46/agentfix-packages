@@ -263,6 +263,16 @@ const OPERATIONS: Record<string, Record<string, Resolver>> = {
     }),
     contactContext: (f) => ({ method: 'GET', path: contactPath(f, '/context') }),
     upsertLead: (f) => ({ method: 'POST', path: contactPath(f, '/lead'), body: leadPayload(f) }),
+    appointmentAvailability: (f) => ({
+      method: 'GET',
+      path: channelPath(f, '/appointments/availability'),
+      qs: compact({ from: str(f.from), days: positive(f.days), limit: positive(f.limit) }),
+    }),
+    createAppointment: (f) => ({
+      method: 'POST',
+      path: contactPath(f, '/appointments'),
+      body: compact({ startsAt: required(f.startsAt, 'Randevu saati (startsAt)'), summary: leadSummary(f.summary), name: trimmed(f.name) }),
+    }),
   },
   customers: {
     getAll: (f) => ({

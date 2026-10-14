@@ -1,5 +1,22 @@
 # Değişiklikler
 
+## 0.5.0
+
+Yeni:
+
+- Platform Channel → **Appointment Availability** (`GET /v1/platform/channels/:kanal/appointments/availability`): AgentFix
+  satış görüşmesi için boş saatler. Günler, saat aralığı ve süre yönetici ayarından gelir; yanıt, müsait olmayan gün
+  istenince kişiye söylenecek cümleyi de taşır.
+- Platform Channel → **Create Appointment** (`POST /v1/platform/channels/:kanal/contacts/:kişi/appointments`): kişiye
+  randevu açar. Kişinin yaklaşan randevusu varsa yenisi açılmaz, mevcut olan döner; dolu saat `409 SLOT_TAKEN`.
+- SDK: `platformChannel.appointmentAvailability()`, `platformChannel.createAppointment()` ve tipleri; `AgentConfig`
+  isteğe bağlı `discovery` ve `appointments` alanları.
+
+Değişiklikler:
+
+- `agentfix-sdk` 0.5.0'a yükseltildi.
+
+
 ## 0.4.0
 
 Yeni:

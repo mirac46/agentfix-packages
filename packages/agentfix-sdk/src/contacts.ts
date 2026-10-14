@@ -63,6 +63,10 @@ export interface AgentConfig {
   temperature: number | null;
   mergeWindowSec: number;
   testMode: boolean;
+  /** Satış görüşmesinden önce sorulacak keşif soruları (istem bloğu); eski sunucuda yok. */
+  discovery?: string;
+  /** Randevu kuralı: müsait günler ve başka gün istenince söylenecek cümle; eski sunucuda yok. */
+  appointments?: string;
   /** Ayarların özeti; herhangi bir ayar değişince değişir. */
   version: string;
 }
@@ -81,5 +85,46 @@ export interface LeadUpsertInput {
 
 export interface LeadUpsertResult {
   lead: ContactLead;
+  created: boolean;
+}
+
+export interface AvailabilitySlot {
+  /** UTC anı (ISO 8601). */
+  startsAt: string;
+  /** Kişiye okunacak biçim: "Cumartesi 18 Ekim, 10:00". */
+  label: string;
+}
+
+export interface AppointmentAvailability {
+  enabled: boolean;
+  timeZone: string;
+  slotMinutes: number;
+  allowedDays: string[];
+  /** Müsait olmayan gün istenince kişiye söylenecek cümle. */
+  message: string;
+  days: Array<{ date: string; weekday: number; label: string; slots: AvailabilitySlot[] }>;
+}
+
+export interface AppointmentAvailabilityQuery {
+  /** İlk gün (YYYY-MM-DD), randevu saat diliminde. */
+  from?: string;
+  days?: number;
+  /** En çok slot sayısı; varsayılan 12. */
+  limit?: number;
+}
+
+export interface AppointmentCreateInput {
+  /** Uygunluk yanıtındaki `startsAt` değeri. */
+  startsAt: string;
+  /** Kişinin keşif yanıtlarının kısa özeti; boşsa aday kaydından üretilir. */
+  summary?: string;
+  name?: string;
+}
+
+export interface AppointmentCreateResult {
+  appointment: { id: number; startsAt: string; durationMinutes: number; status: string; label: string };
+  /** Kişiye yazılacak onayın gövdesi: saat ve hazırlık notu. */
+  confirmation: string;
+  /** false: kişinin yaklaşan randevusu zaten vardı, o döndü. */
   created: boolean;
 }
