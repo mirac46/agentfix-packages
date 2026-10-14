@@ -156,6 +156,18 @@ describe('AgentFix node platform contacts', () => {
     }
   });
 
+  it('reads the channel agent config with the channel credential', async () => {
+    const config = { instructions: 'Kısa yaz.', rules: '', model: 'gpt-5.6-luna', temperature: null, mergeWindowSec: 10, testMode: false, version: 'abc' };
+    const { ctx, http } = context({ resource: 'platformChannel', operation: 'agentConfig' }, { statusCode: 200, body: config });
+    const out = await new AgentFix().execute.call(ctx as never);
+    expect(http).toHaveBeenCalledWith('agentFixPlatformChannelApi', expect.objectContaining({
+      method: 'GET',
+      url: 'https://api.agentfix.com.tr/v1/platform/channels/7/agent-config',
+      body: undefined,
+    }));
+    expect(out[0][0].json).toEqual(config);
+  });
+
   it('requests contact context with the encoded contact', async () => {
     const { ctx, http } = context(
       { resource: 'platformChannel', operation: 'contactContext', contact: '+905551112233' },

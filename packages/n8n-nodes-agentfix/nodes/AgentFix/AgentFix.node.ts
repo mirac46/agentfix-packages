@@ -164,6 +164,7 @@ export class AgentFix implements INodeType {
         displayOptions: { show: { resource: [PLATFORM_CHANNEL] } },
         options: [
           { name: 'Durum (Health)', value: 'health', action: 'Kanal anahtarını doğrula (Verify the channel key)' },
+          { name: 'AI Ayarları (Agent Config)', value: 'agentConfig', action: 'Kanalın AI Agent talimatını, kurallarını ve modelini getir (Get the channel AI Agent instructions, rules and model)' },
           { name: 'Olay Gönder (Send Event)', value: 'sendEvent', action: 'Kanala gelen olayı ilet (Send an inbound channel event)' },
           { name: 'Olayı Yanıtla (Complete Event)', value: 'completeEvent', action: 'Olaya yanıt yaz ve kapat (Reply to and close an event)' },
           { name: 'Bilgi Sor (Knowledge)', value: 'knowledge', action: 'Kanal bilgi bankasına sor (Ask the channel knowledge base)' },

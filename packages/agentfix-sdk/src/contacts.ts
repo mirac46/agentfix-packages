@@ -52,6 +52,21 @@ export interface ContactContext {
   recentRequests: ContactRequest[];
 }
 
+/** Kanalın AI Agent ayarları; akış her mesajda okur, panelde değişince bir sonraki mesajda geçerlidir. */
+export interface AgentConfig {
+  /** Kuruma ve kanala özel talimat. */
+  instructions: string;
+  /** Kanal ve güvenlik kuralları; kurum talimatıyla çelişirse bunlar geçerlidir. */
+  rules: string;
+  model: string;
+  /** null: modelin varsayılanı. */
+  temperature: number | null;
+  mergeWindowSec: number;
+  testMode: boolean;
+  /** Ayarların özeti; herhangi bir ayar değişince değişir. */
+  version: string;
+}
+
 /** Boş bırakılan alan gönderilmez; sunucu kayıttaki değeri korur. */
 export interface LeadUpsertInput {
   name?: string;

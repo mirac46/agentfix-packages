@@ -1,5 +1,6 @@
 export { AgentFix, type AgentFixClientConfig, type BatchClaim, type MessageBufferInput } from './client';
 export type {
+  AgentConfig,
   ContactContext,
   ContactLead,
   ContactRequest,

@@ -1,5 +1,18 @@
 # Değişiklikler
 
+## 0.4.0
+
+Yeni:
+
+- Platform Channel → **Agent Config** (`GET /v1/platform/channels/:kanal/agent-config`): kanalın AI Agent talimatı,
+  kanal kuralları, model, mesaj birleştirme süresi, test modu ve ayar özeti. Akış her mesajda okur; panelde değişen
+  talimat akışı yeniden kurmadan bir sonraki mesajda geçerli olur.
+- SDK: `platformChannel.agentConfig()` ve `AgentConfig` tipi.
+
+Değişiklikler:
+
+- `agentfix-sdk` 0.4.0'a yükseltildi.
+
 ## 0.3.0
 
 Yeni:

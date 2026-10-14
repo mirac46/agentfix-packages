@@ -238,6 +238,7 @@ const OPERATIONS: Record<string, Record<string, Resolver>> = {
   },
   platformChannel: {
     health: (f) => ({ method: 'GET', path: channelPath(f, '/health') }),
+    agentConfig: (f) => ({ method: 'GET', path: channelPath(f, '/agent-config') }),
     sendEvent: (f) => ({
       method: 'POST',
       path: channelPath(f, '/events'),

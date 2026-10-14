@@ -92,6 +92,18 @@ describe('AgentFix client', () => {
     await expect(af.platformChannel.contactContext(3, '+905551112233')).resolves.toEqual(context);
   });
 
+  it('reads the channel agent config with the channel key', async () => {
+    const config = { instructions: 'Kısa yaz.', rules: '', model: 'gpt-5.6-luna', temperature: null, mergeWindowSec: 10, testMode: false, version: 'abc' };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toBe('https://api.agentfix.com.tr/v1/platform/channels/3/agent-config');
+      expect(init?.method).toBe('GET');
+      expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer afp_test');
+      return new Response(JSON.stringify(config), { status: 200 });
+    });
+    const af = new AgentFix({ apiToken: 'afp_test', fetch: fetchMock as unknown as typeof fetch });
+    await expect(af.platformChannel.agentConfig(3)).resolves.toEqual(config);
+  });
+
   it('posts only filled lead fields and returns the created flag', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(String(input)).toBe('https://api.agentfix.com.tr/v1/platform/channels/3/contacts/c-1/lead');

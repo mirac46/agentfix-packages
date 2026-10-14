@@ -1,4 +1,4 @@
-import type { ContactContext, LeadUpsertInput, LeadUpsertResult } from './contacts';
+import type { AgentConfig, ContactContext, LeadUpsertInput, LeadUpsertResult } from './contacts';
 import { toAgentFixError } from './errors';
 import {
   normalizeBaseUrl,
@@ -144,6 +144,8 @@ export class AgentFix {
       this.call<T>('platformChannel', 'completeBatch', { channelId, ...fields }),
     replyBatch: <T = unknown>(channelId: number, fields: BatchClaim & { reply: string; handoff?: boolean }) =>
       this.call<T>('platformChannel', 'replyBatch', { channelId, ...fields }),
+    /** Kanalın güncel AI Agent ayarları: talimat, kurallar, model, birleştirme süresi, test modu. */
+    agentConfig: <T = AgentConfig>(channelId: number) => this.call<T>('platformChannel', 'agentConfig', { channelId }),
     /** Kanaldaki kişinin kayıtlı kullanıcı, potansiyel müşteri ve son talep özetini getirir. */
     contactContext: <T = ContactContext>(channelId: number, contact: string) =>
       this.call<T>('platformChannel', 'contactContext', { channelId, contact }),

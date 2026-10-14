@@ -138,6 +138,11 @@ describe('current v1 contract', () => {
 
   it('maps platform channel calls with the channel id in the path', () => {
     expect(resolve('platformChannel', 'health', { channelId: 7 }).path).toBe('/v1/platform/channels/7/health');
+    expect(resolve('platformChannel', 'agentConfig', { channelId: 7 })).toEqual({
+      method: 'GET',
+      path: '/v1/platform/channels/7/agent-config',
+    });
+    expect(() => resolve('platformChannel', 'agentConfig', {})).toThrow(/Kanal kimliği/);
     expect(
       resolve('platformChannel', 'sendEvent', {
         channelId: 7,
